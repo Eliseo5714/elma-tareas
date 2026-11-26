@@ -148,8 +148,8 @@ function rangoActual(){
   const ini=new Date(hoy);
   if(modo==='semana'){ ini.setDate(hoy.getDate()+desp*7); return {ini,n:7}; }
   if(modo==='tres'){ ini.setDate(hoy.getDate()+desp*3); return {ini,n:3}; }
-  const off={hoy:0,manana:1}[modo]+desp;
-  ini.setDate(hoy.getDate()+off);
+  if(modo==='manana'){ ini.setDate(hoy.getDate()+desp*2); return {ini,n:2}; }
+  ini.setDate(hoy.getDate()+desp);
   return {ini,n:1};
 }
 function diasRango(){
