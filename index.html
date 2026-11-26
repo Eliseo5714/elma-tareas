@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d2330">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Elma tareas">
+<meta name="application-name" content="Elma tareas">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Mantenimiento y limpieza</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0 auto;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));background:#f6f7f9;color:#1d2330;max-width:1100px}
+h1{font-size:22px;margin:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.sub{color:#667;margin:4px 0 16px}
+section{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px #0001}
+h2{font-size:17px;margin:0 0 12px}
+h3{font-size:14px;margin:14px 0 4px;color:#445}
+.apts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.apt{border:1px solid #e2e5ea;border-radius:10px;padding:10px;display:grid;gap:8px}
+.apt .num{font-weight:700;font-size:18px}
+.box{border:0;border-radius:8px;padding:10px;text-align:left;cursor:pointer;color:#fff;display:grid;gap:4px;font:inherit}
+.box.ok{background:#1f7a3d}
+.box.pend{background:#b42318}
+.box b{font-size:14px}
+.box span{font-size:12px;opacity:.95}
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dh{text-align:center;font-size:12px;color:#667;font-weight:600}
+.day{min-height:40px;border-radius:6px;background:#eef0f3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px}
+.day.pend{background:#b42318;color:#fff}
+.day.ok{background:#1f7a3d;color:#fff}
+.day.hoy{outline:2px solid #1d2330}
+.day.sel{outline:3px solid #2563eb}
+.day small{font-size:11px}
+.day[data-f]{cursor:pointer}
+.ln{padding:6px 0;border-bottom:1px solid #eee;font-size:14px}
+.muted{color:#778;font-size:14px}
+button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;background:#fff;cursor:pointer}
+.primary{background:#1d2330;color:#fff;border-color:#1d2330}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:12px}
+.ov[hidden]{display:none}
+.mod{background:#fff;border-radius:12px;padding:16px;max-width:560px;width:100%;max-height:92vh;overflow:auto;position:relative}
+.mod h3{font-size:18px;margin:0 30px 6px 0;color:#1d2330}
+.cerrar{position:absolute;right:10px;top:8px;border:0;background:none;font-size:26px;cursor:pointer;padding:0 6px}
+.mod input,.login input{width:100%;padding:10px;margin:6px 0;border:1px solid #ccd;border-radius:6px;font:inherit}
+.tarea{display:flex;justify-content:space-between;gap:8px;padding:8px;border-radius:8px;margin:6px 0;align-items:center;flex-wrap:wrap;font-size:14px}
+.tarea.pend{background:#fde8e6}
+.tarea.ok{background:#e6f4ea}
+.acc{display:flex;gap:6px;flex-wrap:wrap}
+.msg{font-size:13px;color:#2563eb;min-height:18px;margin-top:6px}
+.err{color:#b42318}
+.login{max-width:360px;margin:12vh auto 0;background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 2px #0001}
+.login button{width:100%;margin-top:8px;padding:10px}
+.login[hidden],#app[hidden]{display:none}
+@media(max-width:700px){.apts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login" hidden>
+  <h1>Mantenimiento y limpieza</h1>
+  <p class="sub">Acceso del equipo · Apartamentos Elma</p>
+  <form id="loginForm">
+    <input id="email" type="email" placeholder="Correo" autocomplete="username" required>
+    <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+    <button type="submit" class="primary">Entrar</button>
+  </form>
+  <div id="loginMsg" class="msg err"></div>
+</div>
+
+<div id="app" hidden>
+  <div class="top">
+    <div>
+      <h1>Mantenimiento y limpieza</h1>
+      <p class="sub">Apartamentos Elma · Castelldefels</p>
+    </div>
+    <div class="acc"><span id="who" class="muted"></span><button id="salir">Salir</button></div>
+  </div>
+
+  <section>
+    <h2>Apartamentos</h2>
+    <div id="apts" class="apts"></div>
+  </section>
+
+  <section>
+    <div class="calhead"><button id="prev">‹</button><h2 id="mes" style="margin:0"></h2><button id="next">›</button></div>
+    <div id="cal" class="cal"></div>
+  </section>
+
+  <section>
+    <h2>Pendientes</h2>
+    <div id="resumen"></div>
+  </section>
+
+  <div id="ov" class="ov" hidden>
+    <div class="mod" role="dialog" aria-modal="true">
+      <button id="cerrar" class="cerrar" aria-label="Cerrar">×</button>
+      <h3 id="modTitulo"></h3>
+      <p class="muted">1. Elige la fecha en el calendario (obligatoria). 2. Escribe un detalle si quieres (opcional). 3. Pulsa Validar.</p>
+      <div class="calhead"><button id="mprev">‹</button><b id="mmes"></b><button id="mnext">›</button></div>
+      <div id="mcal" class="cal"></div>
+      <p>Fecha elegida: <b id="mfecha">—</b></p>
+      <input id="mdesc" placeholder="Detalle (opcional)">
+      <button id="validar" class="primary">Validar</button>
+      <div id="msg" class="msg"></div>
+      <h3>Tareas de este bloque</h3>
+      <div id="lista"></div>
+      <button id="borrarHechas" hidden style="margin-top:8px"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://pdscmiqnwnhwjflhhkde.supabase.co';
+const SUPABASE_KEY='sb_publishable_zgT5RwiOD7sNpqSeRs6rRw_yioXaNyf';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const APTS=['1A','1B','1C','2A','2B','2C','3A','3B','3C'];
+const TIPOS=['Limpieza','Mantenimiento y reparaciones'];
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS=['L','M','X','J','V','S','D'];
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hoyIso=iso(new Date());
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=f=>f.slice(8,10)+'/'+f.slice(5,7);
+const byFecha=(a,b)=>(a.fecha||'').localeCompare(b.fecha||'')||(a.creada||'').localeCompare(b.creada||'');
+
+let tareas=[], abierto=null, fechaMod=null, armado=null, guardando=false, idPendiente=null, canal=null;
+let mesVista=new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let mesMod=new Date(mesVista);
+
+const pendientesDe=(apto,tipo)=>tareas.filter(t=>t.apto===apto&&t.tipo===tipo&&t.estado==='pendiente').sort(byFecha);
+const deBloque=()=>tareas.filter(t=>t.apto===abierto.apto&&t.tipo===abierto.tipo).sort(byFecha);
+
+async function load(){
+  const {data,error}=await sb.from('tareas').select('*');
+  if(error){ $('resumen').innerHTML='<p class="muted err">Error al leer las tareas: '+esc(error.message)+'</p>'; return; }
+  tareas=data||[];
+  pintarTodo();
+}
+function pintarTodo(){ pintarApts(); pintarCal(); pintarResumen(); if(abierto) renderMod(); }
+
+function cajaHTML(apto,tipo){
+  const p=pendientesDe(apto,tipo);
+  const txt=p.length?fmt(p[0].fecha)+(p.length>1?' (+'+(p.length-1)+')':'')+' · '+esc(p[0].descripcion||'Sin detalle'):'Sin pendientes';
+  return '<button class="box '+(p.length?'pend':'ok')+'" data-apto="'+apto+'" data-tipo="'+esc(tipo)+'"><b>'+esc(tipo)+'</b><span>'+txt+'</span></button>';
+}
+function pintarApts(){
+  $('apts').innerHTML=APTS.map(a=>'<div class="apt"><div class="num">'+a+'</div>'+TIPOS.map(t=>cajaHTML(a,t)).join('')+'</div>').join('');
+}
+
+function celdas(y,m,fn){
+  const first=(new Date(y,m,1).getDay()+6)%7, n=new Date(y,m+1,0).getDate();
+  let h=DIAS.map(d=>'<div class="dh">'+d+'</div>').join('');
+  for(let i=0;i<first;i++) h+='<div></div>';
+  for(let d=1;d<=n;d++) h+=fn(y+'-'+pad(m+1)+'-'+pad(d), d);
+  return h;
+}
+function pintarCal(){
+  const y=mesVista.getFullYear(), m=mesVista.getMonth();
+  $('mes').textContent=MESES[m]+' '+y;
+  $('cal').innerHTML=celdas(y,m,(f,d)=>{
+    const ts=tareas.filter(t=>t.fecha===f);
+    const pe=ts.filter(t=>t.estado==='pendiente').length;
+    const cls=pe?'pend':(ts.length?'ok':'');
+    return '<div class="day '+cls+' '+(f===hoyIso?'hoy':'')+'" title="'+ts.length+' tarea(s)">'+d+(ts.length?'<small>'+(pe?pe+' pend.':'✓')+'</small>':'')+'</div>';
+  });
+}
+function pintarResumen(){
+  const p=tareas.filter(t=>t.estado==='pendiente').sort(byFecha);
+  if(!p.length){ $('resumen').innerHTML='<p class="muted">No hay tareas pendientes.</p>'; return; }
+  let h='', last=null;
+  p.forEach(t=>{
+    if(t.fecha!==last){ h+='<h3>'+fmt(t.fecha)+'</h3>'; last=t.fecha; }
+    h+='<div class="ln">'+esc(t.apto)+' · '+esc(t.tipo)+': '+esc(t.descripcion||'Sin detalle')+'</div>';
+  });
+  $('resumen').innerHTML=h;
+}
+
+function abrir(apto,tipo){
+  abierto={apto,tipo}; fechaMod=null; idPendiente=null; armado=null;
+  mesMod=new Date(mesVista);
+  $('modTitulo').textContent=apto+' · '+tipo;
+  $('mdesc').value=''; $('msg').textContent='';
+  $('ov').hidden=false;
+  renderMod();
+}
+function cerrar(){ abierto=null; $('ov').hidden=true; }
+
+function renderMod(){
+  if(!abierto) return;
+  const y=mesMod.getFullYear(), m=mesMod.getMonth();
+  $('mmes').textContent=MESES[m]+' '+y;
+  const bloque=deBloque();
+  $('mcal').innerHTML=celdas(y,m,(f,d)=>{
+    const ts=bloque.filter(t=>t.fecha===f);
+    const pe=ts.some(t=>t.estado==='pendiente');
+    const cls=pe?'pend':(ts.length?'ok':'');
+    return '<div class="day '+cls+' '+(f===fechaMod?'sel':'')+' '+(f===hoyIso?'hoy':'')+'" data-f="'+f+'">'+d+'</div>';
+  });
+  $('mfecha').textContent=fechaMod?fmt(fechaMod):'—';
+  $('lista').innerHTML=bloque.length?bloque.map(t=>{
+    const hecho=t.estado==='hecho';
+    const bDone=hecho?'<button data-act="reabrir" data-id="'+t.id+'">Reabrir</button>':'<button data-act="hecha" data-id="'+t.id+'">Marcar hecha</button>';
+    const bDel='<button data-act="borrar" data-id="'+t.id+'">'+(armado==='b:'+t.id?'¿Seguro? Pulsa otra vez':'Borrar')+'</button>';
+    return '<div class="tarea '+(hecho?'ok':'pend')+'"><span>'+fmt(t.fecha)+' · '+esc(t.descripcion||'Sin detalle')+' <i>('+(hecho?'hecha':'pendiente')+')</i></span><span class="acc">'+bDone+bDel+'</span></div>';
+  }).join(''):'<p class="muted">Sin tareas en este bloque.</p>';
+  const nH=bloque.filter(t=>t.estado==='hecho').length;
+  $('borrarHechas').hidden=!nH;
+  $('borrarHechas').textContent=armado==='hechas'?'¿Seguro? Pulsa otra vez':'Borrar tareas hechas ('+nH+')';
+}
+
+$('apts').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-apto]');
+  if(b) abrir(b.dataset.apto,b.dataset.tipo);
+});
+$('prev').onclick=()=>{ mesVista=new Date(mesVista.getFullYear(),mesVista.getMonth()-1,1); pintarCal(); };
+$('next').onclick=()=>{ mesVista=new Date(mesVista.getFullYear(),mesVista.getMonth()+1,1); pintarCal(); };
+$('mprev').onclick=()=>{ mesMod=new Date(mesMod.getFullYear(),mesMod.getMonth()-1,1); renderMod(); };
+$('mnext').onclick=()=>{ mesMod=new Date(mesMod.getFullYear(),mesMod.getMonth()+1,1); renderMod(); };
+$('mcal').addEventListener('click',e=>{
+  const d=e.target.closest('[data-f]');
+  if(!d) return;
+  fechaMod=d.dataset.f; $('msg').textContent=''; renderMod();
+});
+$('cerrar').onclick=cerrar;
+$('ov').addEventListener('click',e=>{ if(e.target===$('ov')) cerrar(); });
+
+$('validar').onclick=async()=>{
+  if(guardando||!abierto) return;
+  if(!fechaMod){ $('msg').textContent='Elige primero una fecha en el calendario.'; return; }
+  guardando=true; $('validar').disabled=true; $('msg').textContent='Guardando…';
+  if(!idPendiente) idPendiente=crypto.randomUUID();
+  const ahora=new Date().toISOString();
+  const {error}=await sb.from('tareas').upsert({id:idPendiente,apto:abierto.apto,tipo:abierto.tipo,descripcion:$('mdesc').value.trim(),fecha:fechaMod,estado:'pendiente',creada:ahora,actualizada:ahora},{onConflict:'id'});
+  guardando=false; $('validar').disabled=false;
+  if(error){ $('msg').textContent='No se pudo guardar. Si vuelves a pulsar Validar no se creará otra tarea. ('+error.message+')'; renderMod(); return; }
+  idPendiente=null; fechaMod=null; $('mdesc').value='';
+  cerrar();
+  await load();
+};
+
+$('lista').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-act]');
+  if(!b) return;
+  const id=b.dataset.id, act=b.dataset.act;
+  if(act==='borrar'){
+    if(armado!=='b:'+id){
+      armado='b:'+id; renderMod();
+      setTimeout(()=>{ if(armado==='b:'+id){ armado=null; renderMod(); } },4000);
+      return;
+    }
+    armado=null;
+    await sb.from('tareas').delete().eq('id',id);
+  }else{
+    await sb.from('tareas').update({estado:act==='hecha'?'hecho':'pendiente',actualizada:new Date().toISOString()}).eq('id',id);
+  }
+  await load();
+});
+
+$('borrarHechas').onclick=async()=>{
+  if(armado!=='hechas'){
+    armado='hechas'; renderMod();
+    setTimeout(()=>{ if(armado==='hechas'){ armado=null; renderMod(); } },4000);
+    return;
+  }
+  armado=null;
+  const ids=deBloque().filter(t=>t.estado==='hecho').map(t=>t.id);
+  if(ids.length) await sb.from('tareas').delete().in('id',ids);
+  await load();
+};
+
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  $('loginMsg').textContent='Entrando…';
+  const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('pass').value});
+  $('loginMsg').textContent=error?'Correo o contraseña incorrectos.':'';
+  if(!error) $('pass').value='';
+});
+$('salir').onclick=()=>sb.auth.signOut();
+
+function suscribir(){
+  if(canal) return;
+  canal=sb.channel('tareas-cambios').on('postgres_changes',{event:'*',schema:'public',table:'tareas'},()=>load()).subscribe();
+}
+
+sb.auth.onAuthStateChange(async (_evento,session)=>{
+  if(session){
+    $('login').hidden=true; $('app').hidden=false;
+    $('who').textContent=session.user.email;
+    pintarApts(); pintarCal(); pintarResumen();
+    await load();
+    suscribir();
+  }else{
+    $('app').hidden=true; $('login').hidden=false;
+    if(canal){ sb.removeChannel(canal); canal=null; }
+  }
+});
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
