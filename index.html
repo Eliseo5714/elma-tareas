@@ -68,7 +68,7 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
   <form id="loginForm">
     <input id="email" type="email" placeholder="Correo" autocomplete="username" required>
     <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
-    <button type="submit" class="primary">Entrar</button>
+    <button type="submit" class="primary">Entrar</button><button type="button" class="primary" id="googleBtn" style="margin-top:8px;background:#fff;color:#1d2330;border:1px solid #ccc">Continuar con Google</button>
   </form>
   <div id="loginMsg" class="msg err"></div>
 </div>
@@ -285,7 +285,7 @@ $('loginForm').addEventListener('submit',async e=>{
   $('loginMsg').textContent=error?'Correo o contraseña incorrectos.':'';
   if(!error) $('pass').value='';
 });
-$('salir').onclick=()=>sb.auth.signOut();
+$('googleBtn').onclick=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});$('salir').onclick=()=>sb.auth.signOut();
 
 function suscribir(){
   if(canal) return;
