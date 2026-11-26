@@ -126,7 +126,7 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
 <script>
 const SUPABASE_URL='https://pdscmiqnwnhwjflhhkde.supabase.co';
 const SUPABASE_KEY='sb_publishable_zgT5RwiOD7sNpqSeRs6rRw_yioXaNyf';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storage:window.sessionStorage,persistSession:true}});
 
 const APTS=['1A','1B','1C','2A','2B','2C','3A','3B','3C'];
 const DIAS=['L','M','X','J','V','S','D'];
