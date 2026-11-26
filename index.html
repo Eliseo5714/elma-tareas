@@ -122,7 +122,7 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
       <h3>Añadir tarea</h3>
       <div class="nueva">
         <select id="nTipo"><option>Limpieza</option><option>Mantenimiento</option></select>
-        <input id="nTexto" placeholder="Qué hay que hacer">
+        <input id="nTexto" placeholder="Detalle (opcional)">
         <input id="nPersonas" type="number" min="1" placeholder="Número de personas (obligatorio en limpieza)" hidden>
         <input id="nHora" type="time" title="Hora de entrada (obligatoria en limpieza)" hidden>
         <input id="nFecha" type="date">
@@ -201,7 +201,7 @@ function pintarGrid(){
       const lineas=TIPOS.map(tp=>{
         const lst=p.filter(t=>t.tipo===tp);
         const cls=tp==='Limpieza'?'lim':'man';
-        const cont=lst.length?lst.map(t=>'<div class="tk">'+(tp==='Limpieza'&&t.hora_entrada?'<b>'+esc(t.hora_entrada.slice(0,5))+'</b> · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion)+'</div>').join(''):'<span class="vacio">—</span>';
+        const cont=lst.length?lst.map(t=>'<div class="tk">'+(tp==='Limpieza'&&t.hora_entrada?'<b>'+esc(t.hora_entrada.slice(0,5))+'</b> · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion||tp)+'</div>').join(''):'<span class="vacio">—</span>';
         return '<div class="linea '+cls+(lst.length?' pend':'')+'"><div class="etiq">'+tp+'</div>'+cont+'</div>';
       }).join('');
       return '<div class="cel'+(f===hoyIso?' hoy':'')+'" data-apto="'+a+'" data-f="'+f+'">'+lineas+'</div>';
@@ -217,7 +217,7 @@ function filaTarea(t,hecha){
   const bHecha=hecha?'<button data-act="reabrir" data-id="'+t.id+'">Reabrir</button>':'<button data-act="hecha" data-id="'+t.id+'">Hecha</button>';
   const bDel='<button data-act="borrar" data-id="'+t.id+'">'+(armado==='b:'+t.id?'¿Seguro?':'Borrar')+'</button>';
   const det=t.tipo==='Limpieza'&&t.hora_entrada?' · entrada '+esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers.':'';
-  return '<div class="tarea '+(hecha?'ok':'pend')+'"><span><b>'+esc(t.tipo)+'</b> · '+esc(t.descripcion)+det+quien+'</span><span class="acc">'+bHecha+bDel+'</span></div>';
+  return '<div class="tarea '+(hecha?'ok':'pend')+'"><span><b>'+esc(t.tipo)+'</b> · '+esc(t.descripcion||t.tipo)+det+quien+'</span><span class="acc">'+bHecha+bDel+'</span></div>';
 }
 function renderMod(){
   if(!abierto) return;
@@ -288,7 +288,6 @@ $('borrarHechas').onclick=async()=>{
 $('addBtn').onclick=async()=>{
   if(!abierto||guardando) return;
   const texto=$('nTexto').value.trim(), fecha=$('nFecha').value;
-  if(!texto){ $('msg').textContent='Escribe qué hay que hacer.'; return; }
   if(!fecha){ $('msg').textContent='Elige una fecha.'; return; }
   const lim=$('nTipo').value==='Limpieza';
   const personas=parseInt($('nPersonas').value,10), hora=$('nHora').value;
