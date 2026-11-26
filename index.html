@@ -233,7 +233,7 @@ function pintarGrid(){
       const lineas=TIPOS.map(tp=>{
         const lst=p.filter(t=>t.tipo===tp);
         const cls=tp==='Limpieza'?'lim':'man';
-        const cont=lst.length?lst.map(t=>'<div class="tk">'+(tp==='Limpieza'&&t.hora_entrada?'<b>'+esc(t.hora_entrada.slice(0,5))+'</b> · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion||tp)+'</div>').join(''):'<span class="vacio">—</span>';
+        const cont=lst.length?lst.map(t=>'<div class="tk">'+(tp==='Limpieza'&&t.hora_entrada?'<b>'+esc(t.hora_entrada.slice(0,5))+'</b> · '+esc(t.num_personas)+' pers. · ':'')+(t.descripcion?esc(t.descripcion):'')+'</div>').join(''):'<span class="vacio">—</span>';
         return '<div class="linea '+cls+(lst.length?' pend':'')+'" data-tipo="'+tp+'"><div class="etiq">'+tp+'</div>'+cont+'</div>';
       }).join('');
       return '<div class="cel'+(f===hoyIso?' hoy':'')+'" data-apto="'+a+'" data-f="'+f+'">'+lineas+'</div>';
