@@ -114,6 +114,8 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
       <div class="nueva">
         <select id="nTipo"><option>Limpieza</option><option>Mantenimiento</option></select>
         <input id="nTexto" placeholder="Qué hay que hacer">
+        <input id="nPersonas" type="number" min="1" placeholder="Número de personas (obligatorio en limpieza)" hidden>
+        <input id="nHora" type="time" title="Hora de entrada (obligatoria en limpieza)" hidden>
         <input id="nFecha" type="date">
         <button id="addBtn" class="primary">Añadir</button>
       </div>
@@ -182,7 +184,7 @@ function pintarGrid(){
     h+='<div class="rh">'+a+'</div>';
     h+=dias.map(f=>{
       const p=pendientes(a,f); total+=p.length;
-      const chips=p.map(t=>'<span class="chip '+(t.tipo==='Limpieza'?'lim':'man')+'" title="'+esc(t.tipo)+'">'+esc(t.descripcion)+'</span>').join('');
+      const chips=p.map(t=>'<span class="chip '+(t.tipo==='Limpieza'?'lim':'man')+'" title="'+esc(t.tipo)+'">'+(t.tipo==='Limpieza'&&t.hora_entrada?esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion)+'</span>').join('');
       return '<div class="cel'+(f===hoyIso?' hoy':'')+'" data-apto="'+a+'" data-f="'+f+'">'+chips+(p.length?'':'<span class="cnt">—</span>')+'</div>';
     }).join('');
   });
@@ -195,7 +197,8 @@ function filaTarea(t,hecha){
   const quien=hecha&&t.hecha_por?' · hecha por '+esc(t.hecha_por):'';
   const bHecha=hecha?'<button data-act="reabrir" data-id="'+t.id+'">Reabrir</button>':'<button data-act="hecha" data-id="'+t.id+'">Hecha</button>';
   const bDel='<button data-act="borrar" data-id="'+t.id+'">'+(armado==='b:'+t.id?'¿Seguro?':'Borrar')+'</button>';
-  return '<div class="tarea '+(hecha?'ok':'pend')+'"><span><b>'+esc(t.tipo)+'</b> · '+esc(t.descripcion)+quien+'</span><span class="acc">'+bHecha+bDel+'</span></div>';
+  const det=t.tipo==='Limpieza'&&t.hora_entrada?' · entrada '+esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers.':'';
+  return '<div class="tarea '+(hecha?'ok':'pend')+'"><span><b>'+esc(t.tipo)+'</b> · '+esc(t.descripcion)+det+quien+'</span><span class="acc">'+bHecha+bDel+'</span></div>';
 }
 function renderMod(){
   if(!abierto) return;
@@ -212,10 +215,15 @@ function abrir(apto,f){
   abierto={apto,f}; armado=null;
   $('nTipo').value=fTipo!=='Todos'?fTipo:'Limpieza';
   $('nFecha').value=f; $('nTexto').value=''; $('msg').textContent='';
+  $('nPersonas').value=''; $('nHora').value=''; ajustarCampos();
   $('ov').hidden=false;
   renderMod();
 }
 function cerrar(){ abierto=null; armado=null; $('ov').hidden=true; }
+function ajustarCampos(){
+  const lim=$('nTipo').value==='Limpieza';
+  $('nPersonas').hidden=!lim; $('nHora').hidden=!lim;
+}
 
 function armar(clave,redibujar){
   if(armado!==clave){
@@ -235,6 +243,7 @@ $('prev').onclick=()=>{ desp--; pintarGrid(); };
 $('next').onclick=()=>{ desp++; pintarGrid(); };
 $('fTipo').onchange=()=>{ fTipo=$('fTipo').value; pintarGrid(); };
 $('fApto').onchange=()=>{ fApto=$('fApto').value; pintarGrid(); };
+$('nTipo').onchange=ajustarCampos;
 $('cerrar').onclick=cerrar;
 $('ov').addEventListener('click',async e=>{
   if(e.target===$('ov')){ cerrar(); return; }
@@ -262,12 +271,16 @@ $('addBtn').onclick=async()=>{
   const texto=$('nTexto').value.trim(), fecha=$('nFecha').value;
   if(!texto){ $('msg').textContent='Escribe qué hay que hacer.'; return; }
   if(!fecha){ $('msg').textContent='Elige una fecha.'; return; }
+  const lim=$('nTipo').value==='Limpieza';
+  const personas=parseInt($('nPersonas').value,10), hora=$('nHora').value;
+  if(lim&&(!personas||personas<1)){ $('msg').textContent='Indica el número de personas para la limpieza.'; return; }
+  if(lim&&!hora){ $('msg').textContent='Indica la hora de entrada para la limpieza.'; return; }
   guardando=true; $('addBtn').disabled=true; $('msg').textContent='Guardando…';
   const ahora=new Date().toISOString();
-  const {error}=await sb.from('tareas').insert({id:crypto.randomUUID(),apto:abierto.apto,tipo:$('nTipo').value,descripcion:texto,fecha,estado:'pendiente',creada:ahora,actualizada:ahora});
+  const {error}=await sb.from('tareas').insert({id:crypto.randomUUID(),apto:abierto.apto,tipo:$('nTipo').value,descripcion:texto,fecha,estado:'pendiente',creada:ahora,actualizada:ahora,num_personas:lim?personas:null,hora_entrada:lim?hora:null});
   guardando=false; $('addBtn').disabled=false;
   if(error){ $('msg').textContent='No se pudo guardar: '+error.message; return; }
-  $('nTexto').value=''; $('msg').textContent='';
+  $('nTexto').value=''; $('nPersonas').value=''; $('nHora').value=''; $('msg').textContent='';
   await load();
 };
 
