@@ -83,16 +83,15 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
 
   <section>
     <div class="bar seg">
-      <button data-r="1">1 día</button>
-      <button data-r="3">3 días</button>
-      <button data-r="7">1 semana</button>
-      <button data-r="14">2 semanas</button>
+      <button data-m="hoy">Hoy</button>
+      <button data-m="manana">Mañana</button>
+      <button data-m="pasado">Pasado mañana</button>
+      <button data-m="semana">Semana actual</button>
     </div>
     <div class="bar">
       <button id="prev" aria-label="Anterior">‹</button>
       <b id="rangoTxt"></b>
       <button id="next" aria-label="Siguiente">›</button>
-      <button id="hoy">Hoy</button>
     </div>
     <div class="bar">
       <label>Tipo <select id="fTipo"><option>Todos</option><option>Limpieza</option><option>Mantenimiento</option></select></label>
@@ -139,12 +138,25 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const fmt=f=>f.slice(8,10)+'/'+f.slice(5,7);
 const byCreada=(a,b)=>(a.creada||'').localeCompare(b.creada||'');
 
-let tareas=[], rangoDias=7, inicio=new Date(), fTipo='Todos', fApto='Todos';
+let tareas=[], modo='hoy', desp=0, fTipo='Todos', fApto='Todos';
 let abierto=null, armado=null, canal=null, sesionEmail='', guardando=false;
 
+function rangoActual(){
+  const hoy=new Date(); hoy.setHours(12,0,0,0);
+  const ini=new Date(hoy);
+  if(modo==='semana'){
+    const dow=(hoy.getDay()+6)%7;
+    ini.setDate(hoy.getDate()-dow+desp*7);
+    return {ini,n:7};
+  }
+  const off={hoy:0,manana:1,pasado:2}[modo]+desp;
+  ini.setDate(hoy.getDate()+off);
+  return {ini,n:1};
+}
 function diasRango(){
+  const {ini,n}=rangoActual();
   const out=[];
-  for(let i=0;i<rangoDias;i++){ const d=new Date(inicio); d.setDate(inicio.getDate()+i); out.push(iso(d)); }
+  for(let i=0;i<n;i++){ const d=new Date(ini); d.setDate(ini.getDate()+i); out.push(iso(d)); }
   return out;
 }
 function pendientes(apto,f){
@@ -163,7 +175,7 @@ function pintarGrid(){
   const dias=diasRango();
   const aptos=fApto==='Todos'?APTS:[fApto];
   $('rangoTxt').textContent=fmt(dias[0])+' – '+fmt(dias[dias.length-1]);
-  document.querySelectorAll('[data-r]').forEach(b=>b.classList.toggle('on',+b.dataset.r===rangoDias));
+  document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===modo));
   let total=0;
   let h='<div class="grid" style="grid-template-columns:70px repeat('+dias.length+',minmax(120px,1fr))"><div></div>';
   h+=dias.map(f=>{ const d=new Date(f+'T12:00'); return '<div class="dh'+(f===hoyIso?' hoy':'')+'">'+DIAS[(d.getDay()+6)%7]+' '+fmt(f)+'</div>'; }).join('');
@@ -219,10 +231,9 @@ $('grid').addEventListener('click',e=>{
   const c=e.target.closest('.cel');
   if(c) abrir(c.dataset.apto,c.dataset.f);
 });
-document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ rangoDias=+b.dataset.r; pintarGrid(); });
-$('prev').onclick=()=>{ inicio.setDate(inicio.getDate()-rangoDias); pintarGrid(); };
-$('next').onclick=()=>{ inicio.setDate(inicio.getDate()+rangoDias); pintarGrid(); };
-$('hoy').onclick=()=>{ inicio=new Date(); pintarGrid(); };
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ modo=b.dataset.m; desp=0; pintarGrid(); });
+$('prev').onclick=()=>{ desp--; pintarGrid(); };
+$('next').onclick=()=>{ desp++; pintarGrid(); };
 $('fTipo').onchange=()=>{ fTipo=$('fTipo').value; pintarGrid(); };
 $('fApto').onchange=()=>{ fApto=$('fApto').value; pintarGrid(); };
 $('cerrar').onclick=cerrar;
