@@ -35,6 +35,7 @@ section{background:#fff;border-radius:12px;padding:14px;margin-bottom:16px;box-s
 .rh{font-weight:700;display:flex;align-items:center;font-size:16px}
 .cel{min-height:130px;border-radius:8px;background:#f2f4f7;padding:6px;display:flex;flex-direction:column;align-items:stretch;gap:5px;cursor:pointer;min-width:150px}
 .cel:hover{background:#e3e8ef}
+.cel.pend{background:#fbd9d1;border:1px solid #e8a79c}
 .cel.hoy{outline:2px solid #1d2330}
 .cnt{font-size:12px;color:#aab;margin:auto}
 .linea{border-radius:6px;padding:5px 7px;font-size:13px;line-height:1.35}
@@ -124,7 +125,7 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
         <select id="nTipo"><option>Limpieza</option><option>Mantenimiento</option></select>
         <input id="nTexto" placeholder="Detalle (opcional)">
         <input id="nPersonas" type="number" min="1" placeholder="Número de personas (obligatorio en limpieza)" hidden>
-        <input id="nHora" type="time" title="Hora de entrada (obligatoria en limpieza)" hidden>
+        <input id="nHora" type="number" min="0" max="23" placeholder="Hora de entrada (0-23)" hidden>
         <input id="nFecha" type="date">
         <button id="addBtn" class="primary">Añadir</button>
       </div>
@@ -202,9 +203,9 @@ function pintarGrid(){
         const lst=p.filter(t=>t.tipo===tp);
         const cls=tp==='Limpieza'?'lim':'man';
         const cont=lst.length?lst.map(t=>'<div class="tk">'+(tp==='Limpieza'&&t.hora_entrada?'<b>'+esc(t.hora_entrada.slice(0,5))+'</b> · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion||tp)+'</div>').join(''):'<span class="vacio">—</span>';
-        return '<div class="linea '+cls+(lst.length?' pend':'')+'"><div class="etiq">'+tp+'</div>'+cont+'</div>';
+        return '<div class="linea '+cls+'"><div class="etiq">'+tp+'</div>'+cont+'</div>';
       }).join('');
-      return '<div class="cel'+(f===hoyIso?' hoy':'')+'" data-apto="'+a+'" data-f="'+f+'">'+lineas+'</div>';
+      return '<div class="cel'+(f===hoyIso?' hoy':'')+(p.length?' pend':'')+'" data-apto="'+a+'" data-f="'+f+'">'+lineas+'</div>';
     }).join('');
   });
   h+='</div>';
@@ -290,9 +291,10 @@ $('addBtn').onclick=async()=>{
   const texto=$('nTexto').value.trim(), fecha=$('nFecha').value;
   if(!fecha){ $('msg').textContent='Elige una fecha.'; return; }
   const lim=$('nTipo').value==='Limpieza';
-  const personas=parseInt($('nPersonas').value,10), hora=$('nHora').value;
+  const personas=parseInt($('nPersonas').value,10), hRaw=parseInt($('nHora').value,10);
+  const hora=(hRaw>=0&&hRaw<=23)?pad(hRaw)+':00':'';
   if(lim&&(!personas||personas<1)){ $('msg').textContent='Indica el número de personas para la limpieza.'; return; }
-  if(lim&&!hora){ $('msg').textContent='Indica la hora de entrada para la limpieza.'; return; }
+  if(lim&&!hora){ $('msg').textContent='Indica la hora de entrada para la limpieza (un número de 0 a 23).'; return; }
   guardando=true; $('addBtn').disabled=true; $('msg').textContent='Guardando…';
   const ahora=new Date().toISOString();
   const {error}=await sb.from('tareas').insert({id:crypto.randomUUID(),apto:abierto.apto,tipo:$('nTipo').value,descripcion:texto,fecha,estado:'pendiente',creada:ahora,actualizada:ahora,num_personas:lim?personas:null,hora_entrada:lim?hora:null});
