@@ -190,7 +190,7 @@ function pintarGrid(){
     h+='<div class="rh">'+a+'</div>';
     h+=dias.map(f=>{
       const p=pendientes(a,f); total+=p.length;
-      const chips=p.map(t=>'<span class="chip '+(t.tipo==='Limpieza'?'lim':'man')+'" title="'+esc(t.tipo)+'"><b>'+esc(t.apto)+'</b> · '+(t.tipo==='Limpieza'&&t.hora_entrada?esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion)+'</span>').join('');
+      const chips=p.map(t=>{ const lim=t.tipo==='Limpieza'; const det=lim&&t.hora_entrada?' · '+esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers.':''; return '<span class="chip '+(lim?'lim':'man')+'" title="'+esc(t.tipo)+'"><b>'+esc(t.tipo)+'</b> · '+esc(t.apto)+det+'<br>'+esc(t.descripcion)+'</span>'; }).join('');
       return '<div class="cel'+(f===hoyIso?' hoy':'')+'" data-apto="'+a+'" data-f="'+f+'">'+chips+(p.length?'':'<span class="cnt">—</span>')+'</div>';
     }).join('');
   });
