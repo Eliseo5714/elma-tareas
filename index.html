@@ -29,7 +29,9 @@ section{background:#fff;border-radius:12px;padding:14px;margin-bottom:16px;box-s
 .wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .grid{display:grid;gap:4px;min-width:100%}
 .dh{font-size:14px;color:#445;font-weight:700;text-align:center;padding:6px 0}
-.dh.hoy{color:#1d2330;text-decoration:underline}
+.dh.hoy{color:#1d2330}
+.dh.hoy .etq{background:#1d2330;color:#fff;border-radius:4px;padding:1px 6px}
+.dh .etq{color:#445}
 .rh{font-weight:700;display:flex;align-items:center;font-size:16px}
 .cel{min-height:130px;border-radius:8px;background:#f2f4f7;padding:6px;display:flex;flex-direction:column;align-items:stretch;gap:5px;cursor:pointer;min-width:150px}
 .cel:hover{background:#e3e8ef}
@@ -85,7 +87,7 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
     <div class="bar seg">
       <button data-m="hoy">Hoy</button>
       <button data-m="manana">Mañana</button>
-      <button data-m="tres">3 días (hoy, mañana y pasado)</button>
+      <button data-m="tres">Pasado mañana</button>
       <button data-m="semana">Semana actual</button>
     </div>
     <div class="bar">
@@ -177,12 +179,18 @@ function pintarGrid(){
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===modo));
   let total=0;
   let h='<div class="grid" style="grid-template-columns:70px repeat('+dias.length+',minmax(150px,1fr))"><div></div>';
-  h+=dias.map(f=>{ const d=new Date(f+'T12:00'); return '<div class="dh'+(f===hoyIso?' hoy':'')+'">'+DIAS[(d.getDay()+6)%7]+' '+fmt(f)+'</div>'; }).join('');
+  const mananaIso=iso(new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()+1));
+  const WD=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  h+=dias.map(f=>{
+    const d=new Date(f+'T12:00');
+    const etiq=f===hoyIso?'Hoy':(f===mananaIso?'Mañana':WD[d.getDay()]);
+    return '<div class="dh'+(f===hoyIso?' hoy':'')+'"><span class="etq">'+etiq+'</span><br>'+fmt(f)+'</div>';
+  }).join('');
   aptos.forEach(a=>{
     h+='<div class="rh">'+a+'</div>';
     h+=dias.map(f=>{
       const p=pendientes(a,f); total+=p.length;
-      const chips=p.map(t=>'<span class="chip '+(t.tipo==='Limpieza'?'lim':'man')+'" title="'+esc(t.tipo)+'">'+(t.tipo==='Limpieza'&&t.hora_entrada?esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion)+'</span>').join('');
+      const chips=p.map(t=>'<span class="chip '+(t.tipo==='Limpieza'?'lim':'man')+'" title="'+esc(t.tipo)+'"><b>'+esc(t.apto)+'</b> · '+(t.tipo==='Limpieza'&&t.hora_entrada?esc(t.hora_entrada.slice(0,5))+' · '+esc(t.num_personas)+' pers. · ':'')+esc(t.descripcion)+'</span>').join('');
       return '<div class="cel'+(f===hoyIso?' hoy':'')+'" data-apto="'+a+'" data-f="'+f+'">'+chips+(p.length?'':'<span class="cnt">—</span>')+'</div>';
     }).join('');
   });
