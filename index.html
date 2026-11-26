@@ -128,7 +128,7 @@ button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid #bbc;bac
         <input id="nPersonas" type="number" min="1" placeholder="Número de personas (obligatorio en limpieza)" hidden>
         <input id="nHora" type="number" min="0" max="23" placeholder="Hora de entrada (0-23)" hidden>
         <input id="nFecha" type="date">
-        <button id="addBtn" class="primary">Añadir</button>
+        <button id="addBtn" class="primary">Validar</button>
       </div>
       <div id="msg" class="msg"></div>
     </div>
@@ -301,7 +301,7 @@ $('addBtn').onclick=async()=>{
   const {error}=await sb.from('tareas').insert({id:crypto.randomUUID(),apto:abierto.apto,tipo:$('nTipo').value,descripcion:texto,fecha,estado:'pendiente',creada:ahora,actualizada:ahora,num_personas:lim?personas:null,hora_entrada:lim?hora:null});
   guardando=false; $('addBtn').disabled=false;
   if(error){ $('msg').textContent='No se pudo guardar: '+error.message; return; }
-  $('nTexto').value=''; $('nPersonas').value=''; $('nHora').value=''; $('msg').textContent='';
+  cerrar();
   await load();
 };
 
